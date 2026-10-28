@@ -322,6 +322,12 @@ export default function QuizClient({ initialVocabularyBookId = null }: QuizClien
       return;
     }
 
+    if (user.is_anonymous && wrongWordIds.length > 10) {
+      setResultFeedbackMessage("게스트는 단어장당 최대 10단어를 저장할 수 있습니다. 오답이 10개를 초과하여 단어장을 만들 수 없습니다.");
+      setIsCreatingWrongAnswerBook(false);
+      return;
+    }
+
     const createdDateText = new Date().toLocaleDateString("ko-KR");
     const { data: vocabularyBook, error: vocabularyBookError } = await createVocabularyBookForUser(
       `퀴즈 오답 ${createdDateText}`,

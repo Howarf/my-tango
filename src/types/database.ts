@@ -72,6 +72,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      initialize_guest_account: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
       get_random_quiz_words: {
         Args: {
           requested_tag: string | null;

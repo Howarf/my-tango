@@ -107,6 +107,20 @@
   opacity: 0.65;
 }
 
+.guestLabel,
+.logoutError {
+  margin: 0;
+  padding: 0.5rem;
+  color: #4b5563;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.logoutError {
+  color: #dc2626;
+}
+
 @media (min-width: 40rem) {
   .panel {
     width: 18rem;

@@ -262,14 +262,11 @@
   font: inherit;
   font-weight: 800;
   padding: 15px 18px;
-  transition:
-    background 160ms ease,
-    transform 160ms ease;
+  transition: background 160ms ease;
 }
 
 .primaryButton:hover:not(:disabled) {
   background: var(--color-primary-hover);
-  transform: translateY(-1px);
 }
 
 .primaryButton:disabled {

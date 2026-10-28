@@ -6,6 +6,30 @@
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.actionButton {
+  min-height: 2.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  cursor: pointer;
+}
+
+.actionButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .card {
   width: min(100%, 22rem);
   border: 1px solid #e5e7eb;

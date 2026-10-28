@@ -12,14 +12,25 @@ export default function HeaderMenuButton() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const logoutInProgress = useRef(false);
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
   const resetVocabularyBookState = useVocabularyBookStore((state) => state.resetVocabularyBookState);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsGuest(session?.user.is_anonymous === true);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!isMenuOpen) {
       return undefined;
     }
 
+    // 메뉴 바깥 영역을 누르면 열린 메뉴를 닫습니다.
     const handleDocumentPointerDown = (event: globalThis.PointerEvent) => {
       if (menuContainerRef.current?.contains(event.target as Node)) {
         return;
@@ -47,11 +58,22 @@ export default function HeaderMenuButton() {
 
   // Supabase 인증 세션을 종료하고 로그인 페이지로 이동합니다.
   const handleLogout = async () => {
+    if (logoutInProgress.current) return;
+    if (isGuest && !window.confirm("체험을 종료하면 현재 게스트 계정에 다시 접속할 수 없습니다. 종료할까요?")) return;
+    logoutInProgress.current = true;
     setIsLoggingOut(true);
-    await supabase.auth.signOut();
-    resetVocabularyBookState();
-    setIsLoggingOut(false);
-    router.replace("/login");
+    setLogoutError("");
+    try {
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+      if (error) throw error;
+      resetVocabularyBookState();
+      router.replace("/login");
+    } catch {
+      setLogoutError("로그아웃하지 못했습니다. 다시 시도해 주세요.");
+    } finally {
+      logoutInProgress.current = false;
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -74,6 +96,7 @@ export default function HeaderMenuButton() {
         className={`${styles.panel} ${isMenuOpen ? styles.openPanel : ""}`}
         id="main-mobile-menu"
       >
+        {isGuest ? <p className={styles.guestLabel}>게스트 · 단어장 3개 / 각 10단어</p> : null}
         <Link className={styles.menuLink} href="/" onClick={handleCloseMenu}>
           메인
         </Link>
@@ -98,8 +121,9 @@ export default function HeaderMenuButton() {
           type="button"
           onClick={handleLogout}
         >
-          {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+          {isLoggingOut ? "로그아웃 중..." : isGuest ? "체험 종료" : "로그아웃"}
         </button>
+        {logoutError ? <p className={styles.logoutError} role="alert">{logoutError}</p> : null}
       </nav>
     </div>
   );

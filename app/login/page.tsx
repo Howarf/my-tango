@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import PublicOnlyGuard from "@/src/components/PublicOnlyGuard";
 import { isSupabaseConfigured, supabase, supabaseConfigurationMessage } from "@/src/lib/supabaseClient";
 import sharedStyles from "../shared.module.css";
@@ -15,12 +15,16 @@ export default function LoginPage() {
   const [loginId, setLoginId] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGuestLoggingIn, setIsGuestLoggingIn] = useState(false);
+  const authenticationInProgress = useRef(false);
+  const guestNoticeDialogReference = useRef<HTMLDialogElement>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   // 로그인 폼 제출을 검증하고 Supabase 인증 요청을 처리합니다.
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (authenticationInProgress.current) return;
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -34,22 +38,69 @@ export default function LoginPage() {
       return;
     }
 
+    authenticationInProgress.current = true;
     setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginId.trim(),
+        password: loginPassword,
+      });
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+      setSuccessMessage("로그인에 성공했습니다. 메인 페이지로 이동합니다.");
+      router.replace("/");
+    } catch {
+      setErrorMessage("로그인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      authenticationInProgress.current = false;
+      setIsLoading(false);
+    }
+  };
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginId.trim(),
-      password: loginPassword,
-    });
+  // 게스트 체험을 시작하기 전에 이용 한도와 계정 안내를 표시합니다.
+  const handleOpenGuestNotice = () => {
+    if (authenticationInProgress.current) return;
+    guestNoticeDialogReference.current?.showModal();
+  };
 
-    setIsLoading(false);
+  // 로그인 요청 없이 게스트 이용 안내를 닫습니다.
+  const handleCloseGuestNotice = () => {
+    guestNoticeDialogReference.current?.close();
+  };
 
-    if (error) {
-      setErrorMessage(error.message);
+  // 안내 확인 후 기존 세션을 재사용하거나 새 익명 계정으로 체험을 시작합니다.
+  const handleGuestLogin = async () => {
+    if (authenticationInProgress.current) return;
+    guestNoticeDialogReference.current?.close();
+    setErrorMessage("");
+    setSuccessMessage("");
+    if (!isSupabaseConfigured) {
+      setErrorMessage(supabaseConfigurationMessage);
       return;
     }
-
-    setSuccessMessage("로그인에 성공했습니다. 메인 페이지로 이동합니다.");
-    router.push("/");
+    authenticationInProgress.current = true;
+    setIsGuestLoggingIn(true);
+    try {
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!data.session) {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) {
+          setErrorMessage(error.code === "anonymous_provider_disabled"
+            ? "현재 게스트 체험을 이용할 수 없습니다."
+            : "게스트 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+      }
+      router.replace("/");
+    } catch {
+      setErrorMessage("게스트 로그인에 실패했습니다. 연결 상태를 확인해 주세요.");
+    } finally {
+      authenticationInProgress.current = false;
+      setIsGuestLoggingIn(false);
+    }
   };
 
   return (
@@ -97,10 +148,46 @@ export default function LoginPage() {
               <p className={[sharedStyles.formMessage, sharedStyles.successMessage].join(" ")}>{successMessage}</p>
             ) : null}
 
-            <button className={sharedStyles.primaryButton} type="submit" disabled={isLoading}>
+            <button className={sharedStyles.primaryButton} type="submit" disabled={isLoading || isGuestLoggingIn}>
               {isLoading ? "로그인 중..." : "로그인"}
             </button>
           </form>
+
+          <button
+            className={styles.guestButton}
+            type="button"
+            onClick={handleOpenGuestNotice}
+            disabled={isLoading || isGuestLoggingIn}
+          >
+            {isGuestLoggingIn ? "체험 시작 중..." : "게스트로 시작하기"}
+          </button>
+          <dialog
+            ref={guestNoticeDialogReference}
+            className={styles.guestNoticeDialog}
+            aria-labelledby="guest-notice-title"
+            aria-describedby="guest-notice-description"
+          >
+            <h2 id="guest-notice-title" className={sharedStyles.modalTitle}>
+              게스트 이용 안내
+            </h2>
+            <p id="guest-notice-description" className={styles.guestNotice}>
+              로그아웃하면 게스트 계정에 다시 접속할 수 없습니다.<br />
+              게스트 한도: 단어장 3개 · 단어장당 10단어
+            </p>
+            <div className={styles.guestNoticeActions}>
+              <button
+                className={sharedStyles.primaryButton}
+                type="button"
+                onClick={handleGuestLogin}
+                disabled={isLoading || isGuestLoggingIn}
+              >
+                확인
+              </button>
+              <button className={styles.guestButton} type="button" onClick={handleCloseGuestNotice}>
+                취소
+              </button>
+            </div>
+          </dialog>
 
           <p className={sharedStyles.authHelper}>
             아직 계정이 없나요? <Link href="/signup">회원가입</Link>

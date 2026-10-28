@@ -10,6 +10,7 @@ import { calculateLearningProgressPercentage } from "@/src/utils/learningProgres
 type VocabularyBookState = {
   vocabularyBooks: VocabularyBookWithCount[];
   loadedUserId: string | null;
+  loadingUserId: string | null;
   isVocabularyBooksLoading: boolean;
   errorMessage: string;
 };
@@ -26,9 +27,12 @@ type VocabularyBookActions = {
 const initialVocabularyBookState: VocabularyBookState = {
   vocabularyBooks: [],
   loadedUserId: null,
+  loadingUserId: null,
   isVocabularyBooksLoading: false,
   errorMessage: "",
 };
+
+let vocabularyBookRequestVersion = 0;
 
 // Supabase 단어장 행과 연결 행으로 화면에서 사용할 단어장 요약 정보를 만듭니다.
 function createVocabularyBookWithCount(vocabularyBook: VocabularyBookWithLearningRows): VocabularyBookWithCount {
@@ -65,17 +69,23 @@ export const useVocabularyBookStore = create<VocabularyBookState & VocabularyBoo
   ...initialVocabularyBookState,
   // 현재 로그인한 사용자의 단어장 목록과 학습 진행률을 불러와 저장합니다.
   loadVocabularyBooksForUser: async (userId, shouldForceReload = false) => {
-    const { loadedUserId, isVocabularyBooksLoading } = get();
+    const { loadedUserId, loadingUserId, isVocabularyBooksLoading } = get();
 
     if (!shouldForceReload && loadedUserId === userId) {
       return;
     }
 
-    if (isVocabularyBooksLoading) {
+    if (isVocabularyBooksLoading && loadingUserId === userId && !shouldForceReload) {
       return;
     }
 
-    set({ isVocabularyBooksLoading: true, errorMessage: "" });
+    const requestVersion = ++vocabularyBookRequestVersion;
+    set({
+      ...(loadedUserId !== userId ? { vocabularyBooks: [], loadedUserId: null } : {}),
+      loadingUserId: userId,
+      isVocabularyBooksLoading: true,
+      errorMessage: "",
+    });
 
     const { data, error } = await supabase
       .from("vocabulary_books")
@@ -83,10 +93,13 @@ export const useVocabularyBookStore = create<VocabularyBookState & VocabularyBoo
       .eq("user_id", userId)
       .order("created_at", { ascending: true });
 
+    if (requestVersion !== vocabularyBookRequestVersion) return;
+
     if (error) {
       set({
         vocabularyBooks: [],
-        loadedUserId: userId,
+        loadedUserId: null,
+        loadingUserId: null,
         isVocabularyBooksLoading: false,
         errorMessage: `단어장 목록을 불러오지 못했습니다: ${error.message}`,
       });
@@ -98,6 +111,7 @@ export const useVocabularyBookStore = create<VocabularyBookState & VocabularyBoo
         createVocabularyBookWithCount(vocabularyBook),
       ),
       loadedUserId: userId,
+      loadingUserId: null,
       isVocabularyBooksLoading: false,
       errorMessage: "",
     });
@@ -162,5 +176,8 @@ export const useVocabularyBookStore = create<VocabularyBookState & VocabularyBoo
     }));
   },
   // 전역 단어장 목록과 로딩 상태를 초기화합니다.
-  resetVocabularyBookState: () => set(initialVocabularyBookState),
+  resetVocabularyBookState: () => {
+    vocabularyBookRequestVersion += 1;
+    set(initialVocabularyBookState);
+  },
 }));
