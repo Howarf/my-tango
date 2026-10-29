@@ -40,8 +40,15 @@ export default function NotebookList({
           >
             {isMobileListCollapsed ? "펼치기" : "접기"}
           </button>
-          <button className={styles.createInlineButton} onClick={onCreateVocabularyBook} type="button">
-            새 단어장 만들기
+          <button
+            aria-label="새 단어장 만들기"
+            title="새 단어장 만들기"
+            className={styles.createInlineButton}
+            onClick={onCreateVocabularyBook}
+            type="button"
+          >
+            <span className={styles.createNotebookLabel} aria-hidden="true">새 단어장 만들기</span>
+            <span className={styles.createNotebookSymbol} aria-hidden="true">+</span>
           </button>
         </div>
       </div>

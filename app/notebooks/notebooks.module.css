@@ -180,6 +180,10 @@
   white-space: nowrap;
 }
 
+.createNotebookSymbol {
+  display: none;
+}
+
 .emptyListItem {
   border: 1px dashed #cbd5e1;
   border-radius: 1rem;
@@ -461,6 +465,40 @@
   .contentGrid {
     grid-template-columns: 1fr;
   }
+
+  .mobileListToggleButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .notebookListCollapseFrame {
+    display: grid;
+    grid-template-rows: 1fr;
+    overflow: hidden;
+    padding-top: 1px;
+    transition:
+      grid-template-rows 0.3s ease,
+      padding-top 0.3s ease,
+      margin-top 0.3s ease;
+  }
+
+  .notebookListCollapseFrame[data-collapsed="true"] {
+    grid-template-rows: 0fr;
+    margin-top: 0;
+    padding-top: 0;
+    pointer-events: none;
+  }
+
+  .notebookListCollapseFrame .list {
+    min-height: 0;
+    transition: opacity 0s linear 0.1s;
+  }
+
+  .notebookListCollapseFrame[data-collapsed="true"] .list {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 36rem) {
@@ -501,43 +539,23 @@
     gap: 0.4rem;
   }
 
-  .mobileListToggleButton {
+  .createInlineButton {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    white-space: nowrap;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
   }
 
-  .notebookListCollapseFrame {
-    display: grid;
-    grid-template-rows: 1fr;
-    overflow: hidden;
-    padding-top: 1px;
-    transition:
-      grid-template-rows 0.3s ease,
-      padding-top 0.3s ease,
-      margin-top 0.3s ease;
+  .createNotebookLabel {
+    display: none;
   }
 
-  .notebookListCollapseFrame[data-collapsed="true"] {
-    grid-template-rows: 0fr;
-    margin-top: 0;
-    padding-top: 0;
-    pointer-events: none;
-  }
-
-  .notebookListCollapseFrame .list {
-    min-height: 0;
-    transition: opacity 0s linear 0.1s;
-  }
-
-  .notebookListCollapseFrame[data-collapsed="true"] .list {
-    opacity: 0;
-  }
-
-  .createInlineButton {
-    width: auto;
-    padding-inline: 0.75rem;
+  .createNotebookSymbol {
+    display: block;
+    font-size: 1.5rem;
+    line-height: 1;
   }
 
   .cardTitleRow {
