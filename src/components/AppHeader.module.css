@@ -80,6 +80,34 @@
   transform: translateY(0);
 }
 
+.profileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.profileName {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding-left: 0.5rem;
+  color: #111827;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.profileRow .logoutButton {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
 .menuLink,
 .logoutButton {
   display: flex;

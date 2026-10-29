@@ -46,7 +46,7 @@ export default function SignupPage() {
       password: signupPassword,
       options: {
         data: {
-          nickname: nickname.trim(),
+          display_name: nickname.trim(),
         },
       },
     });

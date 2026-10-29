@@ -13,6 +13,8 @@ export default function HeaderMenuButton() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<{ userId: string; displayName: string } | null>(null);
   const [logoutError, setLogoutError] = useState("");
   const logoutInProgress = useRef(false);
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
@@ -21,9 +23,35 @@ export default function HeaderMenuButton() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsGuest(session?.user.is_anonymous === true);
+      setCurrentUserId(session?.user.id ?? null);
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen || !currentUserId) return;
+    let isCancelled = false;
+
+    // 현재 로그인한 사용자의 프로필 이름을 메뉴에 표시하기 위해 조회합니다.
+    const loadProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", currentUserId)
+          .maybeSingle();
+
+        if (!isCancelled) {
+          setProfile({ userId: currentUserId, displayName: error ? "" : data?.display_name.trim() ?? "" });
+        }
+      } catch {
+        if (!isCancelled) setProfile({ userId: currentUserId, displayName: "" });
+      }
+    };
+
+    void loadProfile();
+    return () => { isCancelled = true; };
+  }, [isMenuOpen, currentUserId]);
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -96,7 +124,20 @@ export default function HeaderMenuButton() {
         className={`${styles.panel} ${isMenuOpen ? styles.openPanel : ""}`}
         id="main-mobile-menu"
       >
-        {isGuest ? <p className={styles.guestLabel}>게스트 · 단어장 3개 / 각 10단어</p> : null}
+        <div className={styles.profileRow}>
+          <p className={styles.profileName}>
+            {(profile?.userId === currentUserId ? profile?.displayName : "") || (isGuest ? "게스트" : "사용자")}
+          </p>
+          <button
+            className={styles.logoutButton}
+            disabled={isLoggingOut}
+            type="button"
+            onClick={handleLogout}
+          >
+            {isLoggingOut ? "로그아웃 중..." : isGuest ? "체험 종료" : "로그아웃"}
+          </button>
+        </div>
+        {logoutError ? <p className={styles.logoutError} role="alert">{logoutError}</p> : null}
         <Link className={styles.menuLink} href="/" onClick={handleCloseMenu}>
           메인
         </Link>
@@ -115,15 +156,6 @@ export default function HeaderMenuButton() {
         <Link className={styles.menuLink} href="/katakana" onClick={handleCloseMenu}>
           가타카나
         </Link>
-        <button
-          className={styles.logoutButton}
-          disabled={isLoggingOut}
-          type="button"
-          onClick={handleLogout}
-        >
-          {isLoggingOut ? "로그아웃 중..." : isGuest ? "체험 종료" : "로그아웃"}
-        </button>
-        {logoutError ? <p className={styles.logoutError} role="alert">{logoutError}</p> : null}
       </nav>
     </div>
   );
