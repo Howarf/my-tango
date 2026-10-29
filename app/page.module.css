@@ -317,9 +317,17 @@
 }
 
 .learningVocabularyBookPanel {
+  display: flex;
+  flex-direction: column;
   align-self: stretch;
-  height: 100%;
+  height: 41.5rem;
+  min-height: 0;
   width: 100%;
+  overflow: hidden;
+}
+
+.learningVocabularyBookPanel > .listHeader {
+  flex-shrink: 0;
 }
 
 .emptyLearningVocabularyBookState {
@@ -350,16 +358,16 @@
 }
 
 .learningVocabularyBookList {
+  flex: 1;
+  min-height: 0;
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: 0.65rem;
   margin: 0.9rem 0 0;
-}
-
-.learningVocabularyBookList[data-tall="true"] {
-  max-height: 36rem;
+  overflow: hidden;
 }
 
 .learningVocabularyBookList[data-has-scroll="true"] {
-  max-height: 42rem;
   overflow-y: auto;
   padding-right: 0.25rem;
   scrollbar-width: thin;

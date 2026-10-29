@@ -2,6 +2,7 @@
   width: min(100%, 64rem);
   margin: 0 auto;
   padding: 2rem 1.5rem;
+  padding-bottom: .75rem;
 }
 
 .contentShell {
@@ -311,7 +312,7 @@
 
 @media (max-width: 36rem) {
   .contentPage {
-    padding: 1.25rem 0.85rem 2rem;
+    padding: 1.25rem 0.85rem 0.85rem;
   }
 
   .heroSection {

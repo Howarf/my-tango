@@ -13,8 +13,7 @@ export default function LearningVocabularyBookSection() {
   const errorMessage = useVocabularyBookStore((state) => state.errorMessage);
   const isLoading = isVocabularyBooksLoading || !loadedUserId;
   const hasLearningVocabularyBooks = learningVocabularyBooks.length > 0;
-  const hasTallList = learningVocabularyBooks.length >= 5;
-  const hasScrollableList = learningVocabularyBooks.length > 10;
+  const hasScrollableList = learningVocabularyBooks.length > 4;
 
   return (
     <section
@@ -48,7 +47,6 @@ export default function LearningVocabularyBookSection() {
         <ul
           className={[sharedStyles.responsiveList, styles.learningVocabularyBookList].join(" ")}
           data-has-scroll={hasScrollableList ? "true" : "false"}
-          data-tall={hasTallList ? "true" : "false"}
         >
           {learningVocabularyBooks.map((learningVocabularyBook) => (
             <li className={styles.learningVocabularyBookItem} key={learningVocabularyBook.id}>
